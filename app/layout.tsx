@@ -1,6 +1,8 @@
+import "./globals.css";
+
 export const metadata = {
   title: "PX Generator",
-  description: "LED Pixel Grid Calculator",
+  description: "LED Pixel Grid Generator",
 };
 
 export default function RootLayout({
@@ -10,14 +12,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body
-        style={{
-          margin: 0,
-          background: "#0e0e11",
-          color: "white",
-          fontFamily: "sans-serif",
-        }}
-      >
+      <body style={{ margin: 0, background: "#0b0d12", color: "white" }}>
         {children}
       </body>
     </html>
