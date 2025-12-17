@@ -1,4 +1,4 @@
-import PixelGridCanvas from "@/components/PixelGridCanvas";
+import PixelGridCanvas from import PixelGridCanvas from '../components/PixelGridCanvas';
 
 export default function Home() {
   return (
