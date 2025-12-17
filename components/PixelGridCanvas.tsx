@@ -7,8 +7,8 @@ type Cell = {
   y: number;
 };
 
-const GRID_COLS = 16;
-const GRID_ROWS = 10;
+const COLS = 16;
+const ROWS = 10;
 
 export default function PixelGridCanvas() {
   const [activeCells, setActiveCells] = useState<Cell[]>([]);
@@ -26,89 +26,76 @@ export default function PixelGridCanvas() {
     });
   }
 
-  function getActiveCells() {
-    return [...activeCells];
+  function unique(values: number[]) {
+    const r: number[] = [];
+    values.forEach((v) => !r.includes(v) && r.push(v));
+    return r;
   }
 
-  function uniqueNumbers(values: number[]) {
-    const result: number[] = [];
-    for (const v of values) {
-      if (!result.includes(v)) result.push(v);
-    }
-    return result;
-  }
+  function buildFlow() {
+    if (!activeCells.length) return [];
 
-  function getFlowPath() {
-    const active = getActiveCells();
-    if (!active.length) return [];
-
-    const path: Cell[] = [];
+    const result: Cell[] = [];
 
     if (flowMode === "HORIZONTAL") {
-      const rows = uniqueNumbers(active.map((c) => c.y)).sort(
-        (a, b) => a - b
-      );
+      const rows = unique(activeCells.map((c) => c.y)).sort((a, b) => a - b);
 
-      rows.forEach((row, idx) => {
-        let rowCells = active
+      rows.forEach((row, i) => {
+        let cells = activeCells
           .filter((c) => c.y === row)
           .sort((a, b) => a.x - b.x);
 
-        if (idx % 2 === 1) rowCells = rowCells.reverse();
-        path.push(...rowCells);
+        if (i % 2 === 1) cells.reverse();
+        result.push(...cells);
       });
     } else {
-      const cols = uniqueNumbers(active.map((c) => c.x)).sort(
-        (a, b) => a - b
-      );
+      const cols = unique(activeCells.map((c) => c.x)).sort((a, b) => a - b);
 
-      cols.forEach((col, idx) => {
-        let colCells = active
+      cols.forEach((col, i) => {
+        let cells = activeCells
           .filter((c) => c.x === col)
           .sort((a, b) => a.y - b.y);
 
-        if (idx % 2 === 1) colCells = colCells.reverse();
-        path.push(...colCells);
+        if (i % 2 === 1) cells.reverse();
+        result.push(...cells);
       });
     }
 
-    return path;
+    return result;
   }
 
-  const flowPath = getFlowPath();
+  const flow = buildFlow();
 
   return (
     <div>
       <div style={{ marginBottom: 12 }}>
-        <button
-          onClick={() =>
-            setFlowMode(
-              flowMode === "HORIZONTAL" ? "VERTICAL" : "HORIZONTAL"
-            )
-          }
-        >
-          Flow: {flowMode}
+        <button onClick={() =>
+          setFlowMode(flowMode === "HORIZONTAL" ? "VERTICAL" : "HORIZONTAL")
+        }>
+          Cambiar Flow ({flowMode})
         </button>
+
+        <span style={{ marginLeft: 16 }}>
+          Seleccionados: {activeCells.length}
+        </span>
       </div>
 
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: `repeat(${GRID_COLS}, 32px)`,
-          gridTemplateRows: `repeat(${GRID_ROWS}, 32px)`,
-          gap: 2,
-          background: "#0b0f14",
-          padding: 10,
-          width: "fit-content",
+          gridTemplateColumns: `repeat(${COLS}, 36px)`,
+          gap: 4,
+          background: "#020617",
+          padding: 12,
         }}
       >
-        {Array.from({ length: GRID_ROWS }).map((_, y) =>
-          Array.from({ length: GRID_COLS }).map((_, x) => {
+        {Array.from({ length: ROWS }).map((_, y) =>
+          Array.from({ length: COLS }).map((_, x) => {
             const active = activeCells.some(
               (c) => c.x === x && c.y === y
             );
 
-            const index = flowPath.findIndex(
+            const index = flow.findIndex(
               (c) => c.x === x && c.y === y
             );
 
@@ -117,16 +104,17 @@ export default function PixelGridCanvas() {
                 key={`${x}-${y}`}
                 onClick={() => toggleCell(x, y)}
                 style={{
-                  width: 32,
-                  height: 32,
-                  background: active ? "#0ea5e9" : "#111827",
-                  border: "1px solid #1f2933",
+                  width: 36,
+                  height: 36,
+                  background: active ? "#22c55e" : "#0f172a",
+                  border: "2px solid #1e293b",
+                  cursor: "pointer",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  color: "#fff",
-                  fontSize: 10,
-                  cursor: "pointer",
+                  fontSize: 11,
+                  color: "#e5e7eb",
+                  userSelect: "none",
                 }}
               >
                 {index >= 0 ? index + 1 : ""}
