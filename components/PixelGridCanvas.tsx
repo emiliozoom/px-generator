@@ -1,94 +1,33 @@
 "use client";
 
-import { useState, useRef } from "react";
-import ModuleTile from "./ModuleTile";
-import StatsPanel from "./StatsPanel";
-import { toPng } from "html-to-image";
-
-const SCALE = 0.25;
+const GRID_COLS = 12;
+const GRID_ROWS = 8;
+const CELL_SIZE = 40; // px visuales por celda
 
 export default function PixelGridCanvas() {
-  // Resolución total de la pantalla LED
-  const screenWidthPx = 768;
-  const screenHeightPx = 512;
-
-  const [modules, setModules] = useState<any[]>([]);
-  const gridRef = useRef<HTMLDivElement>(null);
-
-  function addModule() {
-    const widthPx = 128;
-    const heightPx = 256;
-
-    let x = 0;
-    let y = 0;
-
-    for (const m of modules) {
-      x = m.x + m.widthPx;
-      if (x + widthPx > screenWidthPx) {
-        x = 0;
-        y += heightPx;
-      }
-    }
-
-    if (y + heightPx > screenHeightPx) return;
-
-    setModules([
-      ...modules,
-      {
-        id: crypto.randomUUID(),
-        widthPx,
-        heightPx,
-        x,
-        y,
-      },
-    ]);
-  }
-
-  async function exportPNG() {
-    if (!gridRef.current) return;
-    const dataUrl = await toPng(gridRef.current);
-    const link = document.createElement("a");
-    link.download = "px-generator.png";
-    link.href = dataUrl;
-    link.click();
-  }
-
   return (
-    <>
-      <div>
-        <div style={{ display: "flex", gap: 8 }}>
-          <button onClick={addModule}>+ Add Module</button>
-          <button onClick={exportPNG}>Export PNG</button>
-        </div>
-
-        <div
-          ref={gridRef}
-          style={{
-            marginTop: 12,
-            width: screenWidthPx * SCALE,
-            height: screenHeightPx * SCALE,
-            position: "relative",
-            background: "#0e0e11",
-            border: "1px solid #333",
-            backgroundImage:
-              "linear-gradient(#1f1f1f 1px, transparent 1px), linear-gradient(90deg, #1f1f1f 1px, transparent 1px)",
-            backgroundSize: "32px 32px",
-          }}
-        >
-          {modules.map((m) => (
-            <ModuleTile
-              key={m.id}
-              m={m}
-              scale={SCALE}
-              onRemove={() =>
-                setModules(modules.filter((x) => x.id !== m.id))
-              }
-            />
-          ))}
-        </div>
+    <div style={{ marginTop: 20 }}>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: `repeat(${GRID_COLS}, ${CELL_SIZE}px)`,
+          gridTemplateRows: `repeat(${GRID_ROWS}, ${CELL_SIZE}px)`,
+          border: "2px solid #2a2a2a",
+          background: "#0e1117",
+        }}
+      >
+        {Array.from({ length: GRID_COLS * GRID_ROWS }).map((_, i) => (
+          <div
+            key={i}
+            style={{
+              width: CELL_SIZE,
+              height: CELL_SIZE,
+              border: "1px solid #1f2933",
+              boxSizing: "border-box",
+            }}
+          />
+        ))}
       </div>
-
-      <StatsPanel modules={modules} />
-    </>
+    </div>
   );
 }
