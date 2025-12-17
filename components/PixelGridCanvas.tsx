@@ -73,6 +73,11 @@ export default function PixelGridCanvas() {
 
   const flow = getFlowPath();
 
+  function getIndex(x: number, y: number) {
+    const idx = flow.findIndex((c) => c.x === x && c.y === y);
+    return idx === -1 ? null : idx + 1;
+  }
+
   return (
     <div>
       {/* CONTROLS */}
@@ -108,20 +113,49 @@ export default function PixelGridCanvas() {
           gridTemplateRows: `repeat(${GRID_ROWS}, ${CELL}px)`,
         }}
       >
-        {cells.map((c) => (
-          <div
-            key={`${c.x}-${c.y}`}
-            onClick={() => toggleCell(c.x, c.y)}
-            style={{
-              width: CELL,
-              height: CELL,
-              boxSizing: "border-box",
-              border: "1px solid #1f2937",
-              background: c.active ? "#0ea5e9aa" : "transparent",
-              cursor: "pointer",
-            }}
-          />
-        ))}
+        {cells.map((c) => {
+          const index = getIndex(c.x, c.y);
+          const isIn = index === 1;
+          const isOut = index === flow.length && index !== null;
+
+          let bg = "transparent";
+          if (c.active) bg = "#0ea5e9aa";
+          if (isIn) bg = "#22c55e";
+          if (isOut) bg = "#ef4444";
+
+          return (
+            <div
+              key={`${c.x}-${c.y}`}
+              onClick={() => toggleCell(c.x, c.y)}
+              style={{
+                width: CELL,
+                height: CELL,
+                boxSizing: "border-box",
+                border: "1px solid #1f2937",
+                background: bg,
+                color: "white",
+                fontSize: 12,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: "pointer",
+                position: "relative",
+              }}
+            >
+              {index && <span>{index}</span>}
+              {isIn && (
+                <span style={{ position: "absolute", top: 2, left: 2 }}>
+                  IN
+                </span>
+              )}
+              {isOut && (
+                <span style={{ position: "absolute", bottom: 2, right: 2 }}>
+                  OUT
+                </span>
+              )}
+            </div>
+          );
+        })}
 
         {/* FLOW SVG */}
         <svg
