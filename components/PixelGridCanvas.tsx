@@ -1,70 +1,167 @@
 "use client";
 
 import { useState } from "react";
-import StatsPanel from "./StatsPanel";
 
-type Module = {
-  id: number;
+const GRID_COLS = 16;
+const GRID_ROWS = 10;
+const CELL = 48;
+
+type FlowMode = "HORIZONTAL" | "VERTICAL";
+
+type Cell = {
+  x: number;
+  y: number;
+  active: boolean;
 };
 
 export default function PixelGridCanvas() {
-  // GRID SIZE (por ahora fijo, luego será dinámico)
-  const moduleCols = 4;
-  const moduleRows = 4;
+  const [flowMode, setFlowMode] = useState<FlowMode>("HORIZONTAL");
+  const [cells, setCells] = useState<Cell[]>(() => {
+    const arr: Cell[] = [];
+    for (let y = 0; y < GRID_ROWS; y++) {
+      for (let x = 0; x < GRID_COLS; x++) {
+        arr.push({ x, y, active: x < 4 && y < 2 });
+      }
+    }
+    return arr;
+  });
 
-  // EJEMPLO REAL LED
-  // Módulo: 1m alto x 0.5m ancho
-  // Resolución módulo: 128 x 256 px
-  const modulePixelWidth = 128;
-  const modulePixelHeight = 256;
+  function toggleCell(x: number, y: number) {
+    setCells((prev) =>
+      prev.map((c) =>
+        c.x === x && c.y === y ? { ...c, active: !c.active } : c
+      )
+    );
+  }
 
-  const [modules, setModules] = useState<Module[]>(
-    Array.from({ length: moduleCols * moduleRows }, (_, i) => ({
-      id: i,
-    }))
-  );
+  function getActiveCells() {
+    return cells.filter((c) => c.active);
+  }
+
+  function getFlowPath() {
+    const active = getActiveCells();
+    if (!active.length) return [];
+
+    const path: Cell[] = [];
+
+    if (flowMode === "HORIZONTAL") {
+      const rows = [...new Set(active.map((c) => c.y))].sort((a, b) => a - b);
+
+      rows.forEach((row, idx) => {
+        const rowCells = active
+          .filter((c) => c.y === row)
+          .sort((a, b) => a.x - b.x);
+
+        if (idx % 2 === 1) rowCells.reverse();
+        path.push(...rowCells);
+      });
+    } else {
+      const cols = [...new Set(active.map((c) => c.x))].sort((a, b) => a - b);
+
+      cols.forEach((col, idx) => {
+        const colCells = active
+          .filter((c) => c.x === col)
+          .sort((a, b) => a.y - b.y);
+
+        if (idx % 2 === 1) colCells.reverse();
+        path.push(...colCells);
+      });
+    }
+
+    return path;
+  }
+
+  const flow = getFlowPath();
 
   return (
-    <div
-      style={{
-        display: "flex",
-        gap: 24,
-        alignItems: "flex-start",
-      }}
-    >
-      {/* PIXEL GRID */}
+    <div>
+      {/* CONTROLS */}
+      <div style={{ marginBottom: 12 }}>
+        <button
+          onClick={() => setFlowMode("HORIZONTAL")}
+          style={{
+            marginRight: 8,
+            background: flowMode === "HORIZONTAL" ? "#0ff" : "#222",
+          }}
+        >
+          Flow A ↔
+        </button>
+        <button
+          onClick={() => setFlowMode("VERTICAL")}
+          style={{
+            background: flowMode === "VERTICAL" ? "#0ff" : "#222",
+          }}
+        >
+          Flow B ↕
+        </button>
+      </div>
+
+      {/* GRID */}
       <div
         style={{
+          position: "relative",
+          width: GRID_COLS * CELL,
+          height: GRID_ROWS * CELL,
+          background: "#0b0f14",
           display: "grid",
-          gridTemplateColumns: `repeat(${moduleCols}, 80px)`,
-          gridTemplateRows: `repeat(${moduleRows}, 80px)`,
-          gap: 4,
-          padding: 8,
-          background: "#020617",
-          border: "1px solid #1f2937",
+          gridTemplateColumns: `repeat(${GRID_COLS}, ${CELL}px)`,
+          gridTemplateRows: `repeat(${GRID_ROWS}, ${CELL}px)`,
         }}
       >
-        {modules.map((mod) => (
+        {cells.map((c) => (
           <div
-            key={mod.id}
+            key={`${c.x}-${c.y}`}
+            onClick={() => toggleCell(c.x, c.y)}
             style={{
-              width: 80,
-              height: 80,
-              background: "#0f172a",
-              border: "1px solid #334155",
+              width: CELL,
+              height: CELL,
+              boxSizing: "border-box",
+              border: "1px solid #1f2937",
+              background: c.active ? "#0ea5e9aa" : "transparent",
+              cursor: "pointer",
             }}
           />
         ))}
-      </div>
 
-      {/* STATS PANEL */}
-      <StatsPanel
-        moduleCols={moduleCols}
-        moduleRows={moduleRows}
-        modulePixelWidth={modulePixelWidth}
-        modulePixelHeight={modulePixelHeight}
-        modulesCount={modules.length}
-      />
+        {/* FLOW SVG */}
+        <svg
+          width={GRID_COLS * CELL}
+          height={GRID_ROWS * CELL}
+          style={{ position: "absolute", top: 0, left: 0, pointerEvents: "none" }}
+        >
+          <defs>
+            <marker
+              id="arrow"
+              viewBox="0 0 10 10"
+              refX="5"
+              refY="5"
+              markerWidth="6"
+              markerHeight="6"
+              orient="auto-start-reverse"
+            >
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="white" />
+            </marker>
+          </defs>
+
+          {flow.map((c, i) => {
+            const next = flow[i + 1];
+            if (!next) return null;
+
+            return (
+              <line
+                key={i}
+                x1={c.x * CELL + CELL / 2}
+                y1={c.y * CELL + CELL / 2}
+                x2={next.x * CELL + CELL / 2}
+                y2={next.y * CELL + CELL / 2}
+                stroke="white"
+                strokeWidth={2}
+                markerEnd="url(#arrow)"
+              />
+            );
+          })}
+        </svg>
+      </div>
     </div>
   );
 }
