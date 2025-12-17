@@ -1,25 +1,39 @@
-"use client";
+type StatsProps = {
+  moduleCols: number;
+  moduleRows: number;
+  modulePixelWidth: number;
+  modulePixelHeight: number;
+  modulesCount: number;
+};
 
-import { calculateStats } from "@/lib/calculations";
-
-export default function StatsPanel({ modules }: { modules: any[] }) {
-  const stats = calculateStats(modules);
+export default function StatsPanel({
+  moduleCols,
+  moduleRows,
+  modulePixelWidth,
+  modulePixelHeight,
+  modulesCount,
+}: StatsProps) {
+  const totalPixelWidth = moduleCols * modulePixelWidth;
+  const totalPixelHeight = moduleRows * modulePixelHeight;
 
   return (
     <div
       style={{
-        minWidth: 220,
-        background: "#12151c",
-        padding: 12,
-        border: "1px solid #2a2a2a",
+        marginTop: 20,
+        padding: 16,
+        background: "#0b1220",
+        border: "1px solid #1f2937",
+        borderRadius: 6,
+        color: "#e5e7eb",
+        width: 320,
       }}
     >
-      <h3 style={{ marginTop: 0 }}>Stats</h3>
-      <p>Modules: {modules.length}</p>
-      <p>
-        Resolution: {stats.width} × {stats.height}px
-      </p>
-      <p>Total pixels: {stats.totalPixels.toLocaleString()}</p>
+      <h3 style={{ marginBottom: 12 }}>📊 Screen Stats</h3>
+
+      <p>Módulos totales: <b>{modulesCount}</b></p>
+      <p>Resolución: <b>{totalPixelWidth} × {totalPixelHeight} px</b></p>
+      <p>Relación: <b>{(totalPixelWidth / totalPixelHeight).toFixed(2)} : 1</b></p>
+      <p>Módulo: <b>{modulePixelWidth} × {modulePixelHeight} px</b></p>
     </div>
   );
 }
